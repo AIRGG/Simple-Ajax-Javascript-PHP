@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Crud AJAX</title>
+</head>
+<style type="text/css">
+	body{
+		font-family: roboto;
+	}
+	a{
+		text-decoration: none;
+		color: red;
+		margin: 5px 5px 5px;
+		background-color: transparent;
+		padding: 10px 10px 10px 10px;
+	}
+	a:hover{
+		color: blue;
+		font-weight: bold;
+		font-size: 18px;
+	}
+	tr:hover{
+		background-color: lightgrey;
+	}
+	th{
+		color: white;
+		background-color: blue;
+	}
+	td{
+		border-bottom: 1px solid lightgrey;
+	}
+	input[type=text], input[type=number]{
+		height: 30px;
+		width: 15%;
+		padding: 0px 10px 0px 10px;
+	}
+	textarea{
+		padding: 7px 10px 0px 10px;
+		height: 50px;
+		width: 15%;
+	}
+	#nimlbl:hover{
+		cursor: not-allowed;
+	}
+	button{
+		border-radius: 5px;
+		border: 0px;
+		background: orange;
+		color: white;
+		text-shadow: none;
+		padding-top: 6px;
+		padding-bottom: 7px;
+		padding-left: 10px;
+		padding-right: 10px;
+		font-size: 12px;
+		margin-right: 5px;
+	}
+	button:hover{
+		background: green;
+		display: inline-block;
+		padding-top: 6px !important;
+		cursor: pointer;
+	}
+</style>
+<body onload="tampil()">
+<h1 id="isi"></h1>
+<div id="konten">
+<h1>CRUD AJAXNXX.com</h1>
+	<label>Masukkan NIS</label><br>
+		<input type="number" name="" id="nim" autofocus>
+		<input type="number" name="" id="nimlbl" disabled>
+		<input type="hidden" name="" id="nimhide"><br><br>
+	<label>Masukkan Nama</label><br>
+		<input type="text" name="" id="nama" autofocus><br><br>
+	<label>Masukkan Alamat</label><br>
+		<textarea id="alamat" autofocus></textarea><br><br>
+	<button onclick="simpan()" id="simpandata">Simpan</button>
+	<button onclick="edit()" id="editdata">Edit</button>
+	<button onclick="tampil()" id="batal">Batal</button>
+	<button onclick="random()" id="random">Random</button>
+<hr>
+<h2>Data Siswa</h2>
+Cari Data &nbsp;&nbsp;<input type="text" name="" id="searching" oninput="cari()">
+<p id="ketcari"></p><br><br>
+</div>
+<div id="datasiswa" />
+
+<script type="text/javascript">
+	var ajax = buatAjax();
+
+	function buatAjax(){
+		var ajax;
+		if (window.ActiveXObject) {
+			try{
+				ajax = new ActiveObject("Microsoft.XMLHTTP");
+			}
+			catch(e){
+				ajax = false;
+			}
+		}else{
+			try{
+				ajax = new XMLHttpRequest(); 
+			}
+			catch(e){
+				ajax = false;
+			}
+		}
+
+		if (!ajax) alert("Ajax Gagal Dibuat"), document.getElementById("konten").style.display = "none", document.getElementById("isi").innerHTML = "Gagal Bozz";
+		else return ajax;
+	}
+
+	function tampilEdit(nim){
+		document.getElementById("simpandata").style.display = "none";
+		document.getElementById("batal").style.display = "inline";
+		document.getElementById("nim").style.display = "none";
+		document.getElementById("random").style.display = "none";
+		document.getElementById("nimlbl").style.display = "inline";
+		document.getElementById("editdata").style.display = "inline";
+		if (ajax.readyState == 4 || ajax.readyState == 0) {
+			ajax.open("GET", "ajax2.php?op=tampiledit&nim="+nim, true);
+			ajax.onreadystatechange = handleEdit;
+			ajax.send(null);
+		}else{
+			setTimeout("tampilEdit()", 100);
+		}
+	}
+
+	function tampil(){
+		document.getElementById("simpandata").style.display = "inline";
+		document.getElementById("editdata").style.display = "none";
+		document.getElementById("nimlbl").style.display = "none";
+		document.getElementById("nim").style.display = "inline";
+		document.getElementById("batal").style.display = "none";
+		document.getElementById("searching").value = "";
+		document.getElementById("ketcari").style.display = "none";
+		document.getElementById("random").style.display = "inline";
+		if (ajax.readyState == 4 || ajax.readyState == 0) {
+			ajax.open("GET", "ajax2.php?op=tampil", true);
+			ajax.onreadystatechange = buatTable;
+			ajax.send(null);
+		}else{
+			setTimeout("tampil()", 100);
+		}
+	}
+
+	function simpan(){
+		var nim = document.getElementById("nim").value;
+		var nama = document.getElementById("nama").value;
+		var alamat = document.getElementById("alamat").value;
+		if (nim == "" || nama == "" || alamat == "") {
+			alert("Harap isi Semua Data");
+		}else if (nim.length > 11) {
+			alert("Nim Tidak Boleh Lebih Dari 11 Karakter");
+			var ubah = nim.substr(0, 11);
+			document.getElementById("nim").value = ubah;
+		}
+		else{
+			if (ajax.readyState == 4 || ajax.readyState == 0) {
+				nim = encodeURIComponent(document.getElementById("nim").value);
+				nama = encodeURIComponent(document.getElementById("nama").value);
+				alamat = encodeURIComponent(document.getElementById("alamat").value);
+
+				ajax.open("GET", "ajax2.php?op=simpan&nim="+nim+"&nama="+nama+"&alamat="+alamat, true);
+				ajax.onreadystatechange = buatTable;
+				ajax.send(null);
+			}else{
+				setTimeout("simpan()", 100);
+			}
+		}
+	}
+
+	function edit(){
+		if (document.getElementById("nama").value == "" || document.getElementById("alamat").value == "") {
+			alert("Harap isi Semua Data");
+		}else{
+			if (ajax.readyState == 4 || ajax.readyState == 0) {
+				nim = encodeURIComponent(document.getElementById("nimhide").value);
+				nama = encodeURIComponent(document.getElementById("nama").value);
+				alamat = encodeURIComponent(document.getElementById("alamat").value);
+
+				ajax.open("GET", "ajax2.php?op=edit&nim="+nim+"&nama="+nama+"&alamat="+alamat, true);
+				ajax.onreadystatechange = tampil;
+				ajax.send(null);
+			}else{
+				setTimeout("edit()", 100);
+			}
+		}
+	}
+
+	function hapus(nim){
+		if (document.getElementById("nama").value !== "" || document.getElementById("alamat").value !== "") {
+			alert("Harap Batalkan Proses Edit Dahulu!!");
+		}else{
+			var tanya = confirm("Yakin ingin Hapus Data ini?");
+			if (tanya == true) {
+				if (ajax.readyState == 4 || ajax.readyState == 0) {
+					ajax.open("GET", "ajax2.php?op=hapus&nim="+nim, true);
+					ajax.onreadystatechange = buatTable;
+					ajax.send(null);
+				}
+			}
+		}
+	}
+
+	function random(){
+		var nim, nama, alamat, randnim, randnama, randalamat;
+		nim = document.getElementById("nim");
+		nama = document.getElementById("nama");
+		alamat = document.getElementById("alamat");
+		randnim = Math.floor(Math.random() * 99999999999);
+
+		nim.value = randnim;
+		nama.value = Math.floor(Math.random() * 99999999999);
+		alamat.value = Math.floor(Math.random() * 99999999999);
+
+		//var tanya = confirm("Ingin Menambahkan Data?");
+		//if (tanya == true) {
+			if (ajax.readyState == 4 || ajax.readyState == 0) {
+				nim = encodeURIComponent(document.getElementById("nim").value);
+				nama = encodeURIComponent(document.getElementById("nama").value);
+				alamat = encodeURIComponent(document.getElementById("alamat").value);
+
+				ajax.open("GET", "ajax2.php?op=simpan&nim="+nim+"&nama="+nama+"&alamat="+alamat, true);
+				ajax.onreadystatechange = buatTable;
+				ajax.send(null);
+			}else{
+				setTimeout("simpan()", 100);
+			}
+		//}
+	}
+
+	function cari(){
+		var kunci = document.getElementById("searching").value;
+		if (ajax.readyState == 4 || ajax.readyState == 0) {
+			ajax.open("GET", "ajax2.php?op=cari&kunci="+kunci, true);
+			ajax.onreadystatechange = buatTable;
+			ajax.send(null);
+		}else{
+			setTimeout("cari()", 100);
+		}
+	}
+
+	function handleEdit(){
+		if (ajax.readyState == 4) {
+			if (ajax.status == 200) {
+				var respon = ajax.responseXML;
+				ajaxE = respon.documentElement;
+
+				nimX = ajaxE.getElementsByTagName('nim');
+				namaX = ajaxE.getElementsByTagName('nama');
+				alamatX = ajaxE.getElementsByTagName('alamat');
+
+				for(var i=0; i<nimX.length; i++){
+					encodeURIComponent(document.getElementById("nimlbl").value = nimX.item(i).firstChild.data);
+					encodeURIComponent(document.getElementById("nimhide").value = nimX.item(i).firstChild.data);
+					encodeURIComponent(document.getElementById("nama").value = namaX.item(i).firstChild.data);
+					encodeURIComponent(document.getElementById("alamat").value = alamatX.item(i).firstChild.data);
+				}
+			}
+		}
+	}
+
+	function buatTable(){
+		if (ajax.readyState == 4) {
+			if (ajax.status == 200) {
+				var respon = ajax.responseXML;
+				ajaxE = respon.documentElement;
+
+				nimX = ajaxE.getElementsByTagName('nim');
+				namaX = ajaxE.getElementsByTagName('nama');
+				alamatX = ajaxE.getElementsByTagName('alamat');
+
+				datas = "<table cellspacing='0' cellpadding='10'>\
+				<thead>\
+				<th>NIS</th><th>Nama</th><th>Alamat</th><th>Action</th>\
+				</thead>";
+
+				for(var i=0; i<namaX.length; i++){
+					datas += "<tr align='center'><td>"+
+					nimX.item(i).firstChild.data + "</td><td>"+
+					namaX.item(i).firstChild.data + "</td><td>"+
+					alamatX.item(i).firstChild.data + "</td><td>"+
+					"<a href=\"#\" onclick=\"tampilEdit('"+nimX.item(i).firstChild.data+"'); return false; \">Edit</a> |\
+					<a href=\"#\" onclick=\"hapus('"+nimX.item(i).firstChild.data+"'); return false; \">Hapus</a></td></tr>";
+				}
+				datas = datas + "</table>";
+				document.getElementById('datasiswa').innerHTML = datas;
+
+				if (document.getElementById("searching").value !== "") {
+					document.getElementById("ketcari").style.display = "inline";
+					if (namaX.length < 1) {
+						document.getElementById("ketcari").innerHTML = "<b>Data Tidak Ditemukan</b>, Silahkan Cek Kata Kunci Pencarian";
+					}else{
+						document.getElementById("ketcari").innerHTML = "Ditemukan: <b>"+namaX.length+"</b> Data";
+					}
+				}else{
+					document.getElementById("ketcari").style.display = "none";
+				}
+				encodeURIComponent(document.getElementById("nim").value = "");
+				encodeURIComponent(document.getElementById("nama").value = "");
+				encodeURIComponent(document.getElementById("alamat").value = "");
+			}else{
+				alert("Ada kesalahan saat mengakses Server, Silahkan Run Menggunakan Localhost"+ajax.statusText);
+			}
+		}
+	}
+</script>
+</body>
+</html>
